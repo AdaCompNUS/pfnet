@@ -26,6 +26,16 @@ def py_proc_image(img, resize=None, display=False):
     return img
 
 
+def raw_images_to_array(images):
+    image_list = []
+    for image_str in images:
+        image = py_proc_image(image_str, (56, 56))
+        image = scale_observation(np.atleast_3d(image.astype(np.float32)))
+        image_list.append(image)
+
+    return np.stack(image_list, axis=0)
+
+
 def scale_observation(x):
     if x.ndim == 2 or x.shape[2] == 1:  # depth
         return x * (2.0 / 100.0) - 1.0
@@ -252,10 +262,10 @@ class House3DTrajData(RNGDataFlow):
                 # process observations
                 assert self.obsmode in ['rgb', 'depth', 'rgb-depth']  #TODO support for lidar
                 if 'rgb' in self.obsmode:
-                    rgb = self.raw_images_to_array(list(features['rgb'].bytes_list.value)[:self.trajlen])
+                    rgb = raw_images_to_array(list(features['rgb'].bytes_list.value)[:self.trajlen])
                     observation = rgb
                 if 'depth' in self.obsmode:
-                    depth = self.raw_images_to_array(list(features['depth'].bytes_list.value)[:self.trajlen])
+                    depth = raw_images_to_array(list(features['depth'].bytes_list.value)[:self.trajlen])
                     observation = depth
                 if self.obsmode == 'rgb-depth':
                     observation = np.concatenate((rgb, depth), axis=-1)
@@ -267,15 +277,6 @@ class House3DTrajData(RNGDataFlow):
                                                        seed=self.get_sample_seed(self.seed, data_i), )
 
                 yield (true_states, global_map, init_particles, observation, odometry)
-
-    def raw_images_to_array(self, images):
-        image_list = []
-        for image_str in images:
-            image = py_proc_image(image_str, (56, 56))
-            image = scale_observation(np.atleast_3d(image.astype(np.float32)))
-            image_list.append(image)
-
-        return np.stack(image_list, axis=0)
 
     def process_wall_map(self, wallmap_feature):
         floormap = np.atleast_3d(py_proc_image(wallmap_feature))
