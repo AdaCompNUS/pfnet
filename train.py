@@ -104,7 +104,7 @@ def run_training(params):
 
                     # validation(sess, test_brain, num_samples=num_test_samples, params=params)
 
-                    for step_i in tqdm.tqdm(range(num_train_samples), leave=False):
+                    for step_i in tqdm.tqdm(range(num_train_samples)):
                         _, loss, _ = sess.run([train_brain.train_op, train_brain.train_loss_op,
                                                train_brain.update_state_op])
                         periodic_loss += loss
@@ -112,10 +112,10 @@ def run_training(params):
 
                         # print accumulated loss after every few steps
                         if step_i > 0 and (step_i % 500) == 0:
-                            print("Training loss = %f" % (periodic_loss / 500.0))
+                            tqdm.tqdm.write("Training loss = %f" % (periodic_loss / 500.0))
                             periodic_loss = 0.0
 
-                    print("Epoch training loss = %f" % (epoch_loss / num_train_samples))
+                    tqdm.tqdm.write("Epoch training loss = %f" % (epoch_loss / num_train_samples))
 
                     # save model, validate and decrease learning rate after each epoch
                     saver.save(sess, os.path.join(params.logpath, 'model.chk'), global_step=epoch_i)
@@ -127,7 +127,7 @@ def run_training(params):
                         decay_step += 1
                         current_global_step = sess.run(tf.assign(train_brain.global_step_op, decay_step))
                         current_learning_rate = sess.run(train_brain.learning_rate_op)
-                        print("Decreased learning rate to %f." % (current_learning_rate))
+                        tqdm.tqdm.write("Decreased learning rate to %f." % (current_learning_rate))
 
             except KeyboardInterrupt:
                 pass
