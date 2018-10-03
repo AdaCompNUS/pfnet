@@ -5,6 +5,7 @@ from __future__ import print_function
 import os, tqdm
 import tensorflow as tf
 import numpy as np
+from datetime import datetime
 
 import pfnet
 from arguments import parse_args
@@ -143,8 +144,10 @@ def run_training(params):
         print ("Saved to %s"%(params.logpath))
 
 
-
 if __name__ == '__main__':
     params = parse_args()
+
+    params.logpath = os.path.join(params.logpath, "log-" + datetime.now().strftime('%m%d-%H-%M-%S'))
+    os.mkdir(params.logpath)
 
     run_training(params)
