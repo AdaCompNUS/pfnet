@@ -55,7 +55,7 @@ def run_evaluation(params):
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(coord=coord)
 
-            rmse_list = []
+            mse_list = []  # mean squared error
             success_list = []
 
             try:
@@ -63,10 +63,10 @@ def run_evaluation(params):
                     all_distance2, _ = sess.run([test_brain.all_distance2_op, test_brain.update_state_op])
 
                     # we have squared differences along the trajectory
-                    rmse = np.sqrt(np.mean(all_distance2[0]))
-                    rmse_list.append(rmse)
+                    mse = np.mean(all_distance2[0])
+                    mse_list.append(mse)
 
-                    successful = np.all(np.sqrt(all_distance2[0])[-params.trajlen//4:] < 1.0)
+                    successful = np.all(all_distance2[0][-params.trajlen//4:] < 1.0 ** 2)  # below 1 meter
                     success_list.append(successful)
 
             except KeyboardInterrupt:
@@ -79,7 +79,10 @@ def run_evaluation(params):
                 coord.request_stop()
             coord.join(threads)
 
-            print("RMSE = %fcm" % (np.mean(rmse_list) * 100))
+            mean_rmse = np.mean(np.sqrt(mse_list))
+            total_rmse = np.sqrt(np.mean(mse_list))
+            print ("Mean RMSE (average RMSE per trajectory) = %fcm"%(mean_rmse * 100))
+            print("Overall RMSE (reported value) = %fcm" % (total_rmse * 100))
             print("Success rate = %f%%" % (np.mean(np.array(success_list, 'i')) * 100))
 
 
