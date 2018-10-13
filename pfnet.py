@@ -56,15 +56,18 @@ class PFCell(tf.nn.rnn_cell.RNNCell):
     def transition_model(self, particle_states, odometry):
         """
         """
+        translation_std = self.params.transition_std[0] / self.params.map_pixel_in_meters  # in pixels
+        rotation_std = self.params.transition_std[1]  # in radians
+
         with tf.name_scope('transition'):
             part_x, part_y, part_th = tf.unstack(particle_states, axis=-1, num=3)
 
             odometry = tf.expand_dims(odometry, axis=1)
             odom_x, odom_y, odom_th = tf.unstack(odometry, axis=-1, num=3)
 
-            noise_th = tf.random_normal(part_th.get_shape(), mean=0.0, stddev=self.params.transition_std[1])
+            noise_th = tf.random_normal(part_th.get_shape(), mean=0.0, stddev=rotation_std)
 
-            # add orientation noise both before and after translation
+            # add orientation noise before translation
             part_th += noise_th
 
             cos_th = tf.cos(part_th)
@@ -73,9 +76,8 @@ class PFCell(tf.nn.rnn_cell.RNNCell):
             delta_y = sin_th * odom_x + cos_th * odom_y
             delta_th = odom_th
 
-            delta_x += tf.random_normal(delta_x.get_shape(), mean=0.0, stddev=self.params.transition_std[0])
-            delta_y += tf.random_normal(delta_y.get_shape(), mean=0.0, stddev=self.params.transition_std[0])
-            delta_th += noise_th
+            delta_x += tf.random_normal(delta_x.get_shape(), mean=0.0, stddev=translation_std)
+            delta_y += tf.random_normal(delta_y.get_shape(), mean=0.0, stddev=translation_std)
 
             return tf.stack([part_x+delta_x, part_y+delta_y, part_th+delta_th], axis=-1)
 
