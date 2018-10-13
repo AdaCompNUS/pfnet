@@ -189,14 +189,14 @@ class BreakForBPTT(ProxyDataFlow):
 
 class House3DTrajData(RNGDataFlow):
     def __init__(self, files, mapmode, obsmode, trajlen, num_particles, init_particles_distr,
-                 init_particles_std, seed=None):
+                 init_particles_cov, seed=None):
         self.files = files
         self.mapmode = mapmode
         self.obsmode = obsmode
         self.trajlen = trajlen
         self.num_particles = num_particles
         self.init_particles_distr = init_particles_distr
-        self.init_particles_std = init_particles_std
+        self.init_particles_cov = init_particles_cov
         self.seed = seed
 
         # count total entries
@@ -272,7 +272,7 @@ class House3DTrajData(RNGDataFlow):
 
                 # generate particle states
                 init_particles = self.random_particles(true_states[0], self.init_particles_distr,
-                                                       self.init_particles_std, self.num_particles,
+                                                       self.init_particles_cov, self.num_particles,
                                                        roomidmap=map_roomid,
                                                        seed=self.get_sample_seed(self.seed, data_i), )
 
@@ -309,11 +309,10 @@ class House3DTrajData(RNGDataFlow):
         return roomidmap
 
     @staticmethod
-    def random_particles(state, distr, particle_std, num_particles, roomidmap, seed=None):
+    def random_particles(state, distr, particles_cov, num_particles, roomidmap, seed=None):
         assert distr in ["tracking", "one-room"]  #TODO add support for two-room and all-room
 
         particles = np.zeros((num_particles, 3), np.float32)
-        cov = np.diag(np.array([particle_std[0], particle_std[0], particle_std[1]], np.float32))
 
         # fix seed
         if seed is not None:
@@ -321,8 +320,8 @@ class House3DTrajData(RNGDataFlow):
             np.random.seed(seed)
 
         if distr == "tracking":
-            center = np.random.multivariate_normal(mean=state, cov=cov)
-            particles = np.random.multivariate_normal(mean=center, cov=cov, size=num_particles)
+            center = np.random.multivariate_normal(mean=state, cov=particles_cov)
+            particles = np.random.multivariate_normal(mean=center, cov=particles_cov, size=num_particles)
 
         elif distr == "one-room":
             # mask the room the initial state is in
@@ -340,6 +339,8 @@ class House3DTrajData(RNGDataFlow):
                     continue
                 particles[sample_i] = particle
                 sample_i += 1
+        else:
+            raise ValueError
 
         # restore random seed
         if seed is not None:
@@ -361,8 +362,14 @@ def get_dataflow(files, params, is_training):
     trajlen = params.trajlen
     bptt_steps = params.bptt_steps
 
+    # build initial covariance matrix of particles, in pixels and radians
+    particle_std = params.init_particles_std.copy()
+    particle_std[0] = particle_std[0] / params.map_pixel_in_meters  # convert meters to pixels
+    particle_std2 = np.square(particle_std)  # variance
+    init_particles_cov = np.diag(particle_std2[(0, 0, 1),])
+
     df = House3DTrajData(files, mapmode, obsmode, trajlen, num_particles,
-                         params.init_particles_distr, params.init_particles_std, params.seed)
+                         params.init_particles_distr, init_particles_cov, params.seed)
     # data: true_states, global_map, init_particles, observation, odometry
 
     # make it a multiple of batchsize
