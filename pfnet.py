@@ -383,7 +383,7 @@ class PFNet(object):
         coord_diffs = mean_coords - true_coords
 
         # convert from pixel coordinates to meters
-        coord_diffs *= 0.02
+        coord_diffs *= self.params.map_pixel_in_meters
 
         # coordinate loss component: (x-x')^2 + (y-y')^2
         loss_coords = tf.reduce_sum(tf.square(coord_diffs), axis=2)

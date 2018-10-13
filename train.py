@@ -19,11 +19,11 @@ except Exception:
 
 def validation(sess, brain, num_samples, params):
 
-    fix_seed = (params.testseed is not None and params.testseed >= 0)
+    fix_seed = (params.validseed is not None and params.validseed >= 0)
     if fix_seed:
         np_random_state = np.random.get_state()
-        np.random.seed(params.testseed)
-        tf.set_random_seed(params.testseed)
+        np.random.seed(params.validseed)
+        tf.set_random_seed(params.validseed)
 
     saved_state = brain.save_state(sess)
 
