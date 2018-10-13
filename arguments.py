@@ -27,9 +27,9 @@ def parse_args(args=None, return_parser=False):
     p.add('--bptt_steps', type=int, default=0,
                     help='Total length of training trajectories. Must be 0 or a multiple of trajlen')
 
-    p.add('--resample', type=bool, default=False,
+    p.add('--resample', type=str, default='false',
                 help='add resampling. only works with brains with sequential construction')
-    p.add('--alpha', type=float, default=1.0,
+    p.add('--alpha_resample_ratio', type=float, default=1.0,
                     help='Ratio for soft-resampling. 1.0 default meaning proper resampling')
     p.add('--transition_std', nargs='*', default=["0", "0"],
                 help='Standard deviations for motion update. [translate, rotate1(deg), rotate2(deg, optional)]')
@@ -60,5 +60,10 @@ def parse_args(args=None, return_parser=False):
 
     params.transition_std = np.array(params.transition_std, np.float32)
     params.init_particles_std = np.array(params.init_particles_std, np.float32)
+
+    if params.resample not in ['false', 'true']:
+        print ("The value of resample must be either 'false' or 'true'")
+        raise ValueError
+    params.resample = (params.resample == 'true')
 
     return params

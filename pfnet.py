@@ -40,7 +40,7 @@ class PFCell(tf.nn.rnn_cell.RNNCell):
             # resample
             if self.params.resample:
                 particle_states, particle_weights = self.resample(
-                    particle_states, particle_weights, alpha=self.params.resample_ratio)
+                    particle_states, particle_weights, alpha=self.params.alpha_resample_ratio)
 
             # construct output before motion update
             outputs = particle_states, particle_weights
@@ -153,7 +153,7 @@ class PFCell(tf.nn.rnn_cell.RNNCell):
             helper = tf.range(0, batch_size*num_particles, delta=num_particles, dtype=tf.int32)  # (batch, )
             indices = indices + tf.expand_dims(helper, axis=1)
 
-            particle_states = tf.reshape(particle_states, (batch_size * num_particles, 4))
+            particle_states = tf.reshape(particle_states, (batch_size * num_particles, 3))
             particle_states = tf.gather(particle_states, indices=indices, axis=0)  # (batch_size, num_particles, 3)
 
             particle_weights = tf.reshape(particle_weights, (batch_size * num_particles, ))
