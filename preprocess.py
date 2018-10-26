@@ -314,13 +314,20 @@ class House3DTrajData(RNGDataFlow):
 
         particles = np.zeros((num_particles, 3), np.float32)
 
-        # fix seed
-        if seed is not None:
-            random_state = np.random.get_state()
-            np.random.seed(seed)
-
         if distr == "tracking":
+            # fix seed
+            if seed is not None:
+                random_state = np.random.get_state()
+                np.random.seed(seed)
+
+            # sample offset from the Gaussian
             center = np.random.multivariate_normal(mean=state, cov=particles_cov)
+
+            # restore random seed
+            if seed is not None:
+                np.random.set_state(random_state)
+
+            # sample particles from the Gaussian, centered around the offset
             particles = np.random.multivariate_normal(mean=center, cov=particles_cov, size=num_particles)
 
         elif distr == "one-room":
@@ -369,7 +376,9 @@ def get_dataflow(files, params, is_training):
     init_particles_cov = np.diag(particle_std2[(0, 0, 1),])
 
     df = House3DTrajData(files, mapmode, obsmode, trajlen, num_particles,
-                         params.init_particles_distr, init_particles_cov, params.seed)
+                         params.init_particles_distr, init_particles_cov,
+                         seed=(params.seed if params.seed is not None and params.seed > 0
+                               else (params.validseed if not is_training else None)))
     # data: true_states, global_map, init_particles, observation, odometry
 
     # make it a multiple of batchsize
