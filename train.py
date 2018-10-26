@@ -118,12 +118,12 @@ def run_training(params):
                     tqdm.tqdm.write("Epoch training loss = %f" % (epoch_loss / num_train_samples))
 
                     # save model, validate and decrease learning rate after each epoch
-                    saver.save(sess, os.path.join(params.logpath, 'model.chk'), global_step=epoch_i)
+                    saver.save(sess, os.path.join(params.logpath, 'model.chk'), global_step=epoch_i + 1)
 
                     validation(sess, test_brain, num_samples=num_test_samples, params=params)
 
                     #  decay learning rate
-                    if epoch_i > 0 and (epoch_i % params.decaystep == 0):
+                    if epoch_i + 1 % params.decaystep == 0:
                         decay_step += 1
                         current_global_step = sess.run(tf.assign(train_brain.global_step_op, decay_step))
                         current_learning_rate = sess.run(train_brain.learning_rate_op)
@@ -141,7 +141,7 @@ def run_training(params):
 
             coord.join(threads)
 
-        print ("Saved to %s"%(params.logpath))
+        print ("Training done. Model is saved to %s"%(params.logpath))
 
 
 if __name__ == '__main__':
