@@ -5,7 +5,13 @@ Tensorflow implementation of Particle Filter Networks (PF-net)
 Peter Karkus, David Hsu, and Wee Sun Lee:  Particle filter networks with application to visual localization.
 Conference on Robot Learning (CoRL), 2018. https://arxiv.org/abs/1805.08975
 
-National University of Singapore
+### PF-net architecture
+<img src="figs/architecture.png" width="553" height="200"/><br>
+PF-net encodes both a learned probabilistic system model and the particle filter algorithm in a single neural network
+
+### Localization example
+<img src="figs/trajectory.jpg" width="600" height="207"/><br>
+Example for successful global localization
 
 
 ### Requirements
