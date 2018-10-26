@@ -12,7 +12,7 @@ try: input = raw_input
 except NameError: pass
 
 from utils.tfrecordfeatures import *
-from preprocess import py_proc_image, raw_images_to_array
+from preprocess import decode_image, raw_images_to_array
 
 try:
     import ipdb as pdb
@@ -29,18 +29,18 @@ def display_data(file):
         # maps are np.uint8 arrays. each has a different size.
 
         # wall map: 0 for free space, 255 for walls
-        map_wall = py_proc_image(features['map_wall'].bytes_list.value[0])
+        map_wall = decode_image(features['map_wall'].bytes_list.value[0])
 
         # door map: 0 for free space, 255 for doors
-        map_door = py_proc_image(features['map_door'].bytes_list.value[0])
+        map_door = decode_image(features['map_door'].bytes_list.value[0])
 
         # roomtype map: binary encoding of 8 possible room categories
         # one state may belong to multiple room categories
-        map_roomtype = py_proc_image(features['map_roomtype'].bytes_list.value[0])
+        map_roomtype = decode_image(features['map_roomtype'].bytes_list.value[0])
 
         # roomid map: pixels correspond to unique room ids.
         # for overlapping rooms the higher ids overwrite lower ids
-        map_roomid = py_proc_image(features['map_roomid'].bytes_list.value[0])
+        map_roomid = decode_image(features['map_roomid'].bytes_list.value[0])
 
         # true states
         # (x, y, theta). x,y: pixel coordinates; theta: radians

@@ -18,6 +18,14 @@ except Exception:
 
 
 def validation(sess, brain, num_samples, params):
+    """
+    Run validation
+    :param sess: tensorflow session
+    :param brain: network object that provides loss and update ops, and functions to save and restore the hidden state.
+    :param num_samples: int, number of samples in the validation set.
+    :param params: parsed arguments
+    :return: validation loss, averaged over the validation set
+    """
 
     fix_seed = (params.validseed is not None and params.validseed >= 0)
     if fix_seed:
@@ -50,6 +58,8 @@ def validation(sess, brain, num_samples, params):
 
 
 def run_training(params):
+    """ Run training with the parsed arguments """
+
     with tf.Graph().as_default():
         if params.seed is not None:
             tf.set_random_seed(params.seed)
@@ -89,37 +99,31 @@ def run_training(params):
 
             try:
                 decay_step = 0
+
+                # repeat for a fixed number of epochs
                 for epoch_i in range(params.epochs):
                     epoch_loss = 0.0
                     periodic_loss = 0.0
 
-                    # #TODO remove
-                    # loss, eval_loss, particle_states, particle_weights, true_states, init_particles = sess.run([train_brain.train_loss_op, train_brain.eval_loss_op, train_brain.outputs[0], train_brain.outputs[1], train_data[0], train_data[2]])
-                    # print (loss)
-                    # particle_mean = np.mean(particle_states, axis=1)
-                    # print (particle_mean[0, :, :2])
-                    # print (true_states[0, :, :2])
-                    # print (init_particles[0])
-                    # pdb.set_trace()
-
-                    # validation(sess, test_brain, num_samples=num_test_samples, params=params)
-
+                    # run training over all samples in an epoch
                     for step_i in tqdm.tqdm(range(num_train_samples)):
                         _, loss, _ = sess.run([train_brain.train_op, train_brain.train_loss_op,
                                                train_brain.update_state_op])
                         periodic_loss += loss
                         epoch_loss += loss
 
-                        # print accumulated loss after every few steps
+                        # print accumulated loss after every few hundred steps
                         if step_i > 0 and (step_i % 500) == 0:
-                            tqdm.tqdm.write("Training loss = %f" % (periodic_loss / 500.0))
+                            tqdm.tqdm.write("Epoch %d, step %d. Training loss = %f" % (epoch_i + 1, step_i, periodic_loss / 500.0))
                             periodic_loss = 0.0
 
-                    tqdm.tqdm.write("Epoch training loss = %f" % (epoch_loss / num_train_samples))
+                    # print the avarage loss over the epoch
+                    tqdm.tqdm.write("Epoch %d done. Average training loss = %f" % (epoch_i + 1, epoch_loss / num_train_samples))
 
                     # save model, validate and decrease learning rate after each epoch
                     saver.save(sess, os.path.join(params.logpath, 'model.chk'), global_step=epoch_i + 1)
 
+                    # run validation
                     validation(sess, test_brain, num_samples=num_test_samples, params=params)
 
                     #  decay learning rate

@@ -22,7 +22,7 @@ def parse_args(args=None):
           help='Observation input type. Possible values: rgb / depth / rgb-depth / vrf.')
     p.add('--mapmode', type=str, default='wall',
           help='Map input type with different (semantic) channels. ' +
-               'Possible values: wall/wall-door/wall-roomtype/wall-door-roomtype')
+               'Possible values: wall / wall-door / wall-roomtype / wall-door-roomtype')
     p.add('--map_pixel_in_meters', type=float, default=0.02,
           help='The width (and height) of a pixel of the map in meters. Defaults to 0.02 for House3D data.')
 

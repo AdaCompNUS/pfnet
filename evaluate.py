@@ -17,6 +17,7 @@ except Exception:
 
 
 def run_evaluation(params):
+    """ Run evaluation with the parsed arguments """
 
     # overwrite for evaluation
     params.batchsize = 1
@@ -56,7 +57,7 @@ def run_evaluation(params):
             threads = tf.train.start_queue_runners(coord=coord)
 
             mse_list = []  # mean squared error
-            success_list = []
+            success_list = []  # true for successful localization
 
             try:
                 for step_i in tqdm.tqdm(range(num_test_samples)):
@@ -66,6 +67,7 @@ def run_evaluation(params):
                     mse = np.mean(all_distance2[0])
                     mse_list.append(mse)
 
+                    # localization is successfull if the rmse error is below 1m for the last 25% of the trajectory
                     successful = np.all(all_distance2[0][-params.trajlen//4:] < 1.0 ** 2)  # below 1 meter
                     success_list.append(successful)
 
@@ -79,6 +81,7 @@ def run_evaluation(params):
                 coord.request_stop()
             coord.join(threads)
 
+            # report results
             mean_rmse = np.mean(np.sqrt(mse_list))
             total_rmse = np.sqrt(np.mean(mse_list))
             print ("Mean RMSE (average RMSE per trajectory) = %fcm"%(mean_rmse * 100))
